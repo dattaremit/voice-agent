@@ -8,7 +8,7 @@ The agent calls a patient after a visit, asks a fixed set of follow-up questions
 |---|---|
 | Web app | Next.js 16 (App Router, Server Actions), React 19, TypeScript, Bun |
 | UI | shadcn/ui + Tailwind v4, custom **Winter** theme, fully rounded buttons |
-| Database | PostgreSQL 17 (Docker) + **Drizzle ORM** + `postgres` driver |
+| Database | PostgreSQL 17 (local Homebrew) + **Drizzle ORM** + `postgres` driver |
 | Validation | Zod (shared schemas for forms, API and the summary) |
 | Voice agent | Python 3.13 + **Pipecat 1.2**, managed with `uv` |
 | Transport | Pipecat SmallWebRTC (browser mic, no extra key); Twilio phone calls later |
@@ -44,7 +44,6 @@ voice-agent/
 │  ├─ red_flags.py              Escalation detection
 │  └─ reporter.py               Sends transcript + answers to the web app
 ├─ drizzle/                     Generated migrations
-├─ docker-compose.yml           Postgres
 └─ .env.example
 ```
 
@@ -85,7 +84,7 @@ voice-agent/
 
 ## Milestones
 
-1. **Foundation**: shadcn init, Winter theme, Docker Postgres, Drizzle schema + migrations, seed script, env validation.
+1. **Foundation**: shadcn init, Winter theme, Postgres, Drizzle schema + migrations, seed script, env validation.
 2. **Dashboard**: patients list, patient detail, visits, create-call Server Action.
 3. **Voice agent**: Pipecat pipeline (VAD + Smart Turn + Deepgram + Claude + Cartesia), browser connect, live transcript.
 4. **Question flow**: tool-based answer capture, identity check, red-flag escalation.
@@ -96,7 +95,7 @@ voice-agent/
 
 ```bash
 cp .env.example .env
-docker compose up -d
+createdb voice_agent
 bun install
 bun run db:migrate
 bun run db:seed
