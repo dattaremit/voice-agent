@@ -1,16 +1,15 @@
-import { Button } from "@/components/ui/button";
+import { Suspense } from "react";
+import { PageHeading } from "@/components/layout/page-heading";
+import { VisitTable } from "@/components/visits/visit-table";
+import { VisitTableSkeleton } from "@/components/visits/visit-table-skeleton";
 
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-6 px-4 text-center">
-      <h1 className="font-heading text-4xl font-semibold tracking-tight">Patient Follow-Up</h1>
-      <p className="max-w-xl text-muted-foreground">
-        A voice agent calls patients after their visit, asks structured follow-up questions, and prepares a summary for the clinician.
-      </p>
-      <div className="flex gap-3">
-        <Button size="lg">Start follow-up call</Button>
-        <Button size="lg" variant="outline">View patients</Button>
-      </div>
+    <main className="mx-auto w-full max-w-5xl space-y-8 px-4 py-10">
+      <PageHeading title="Recent visits" description="Patients due for a post-visit follow-up call." />
+      <Suspense fallback={<VisitTableSkeleton />}>
+        <VisitTable />
+      </Suspense>
     </main>
   );
 }
