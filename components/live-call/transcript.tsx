@@ -1,28 +1,24 @@
 "use client";
 
 import { usePipecatConversation } from "@pipecat-ai/client-react";
-import { cn } from "@/lib/utils";
+import { type Speaker, TranscriptBubble } from "@/components/shared/transcript-bubble";
 import { messageText } from "./message-text";
 
-const speakers = { user: "Patient", assistant: "Agent" } as const;
+const speakers: Partial<Record<string, Speaker>> = { user: "patient", assistant: "agent" };
 
 export function Transcript() {
   const { messages } = usePipecatConversation();
-  const turns = messages.filter((message) => message.role === "user" || message.role === "assistant");
+  const turns = messages.flatMap((message) => {
+    const speaker = speakers[message.role];
+    return speaker ? [{ key: message.createdAt, speaker, text: messageText(message) }] : [];
+  });
   if (turns.length === 0) return <p className="text-sm text-muted-foreground">The transcript appears here once the call starts.</p>;
   return (
     <ol className="space-y-3">
-      {turns.map((message) => (
-        <li
-          key={message.createdAt}
-          className={cn(
-            "max-w-[85%] rounded-2xl px-4 py-2 text-sm",
-            message.role === "assistant" ? "bg-secondary" : "ml-auto bg-primary text-primary-foreground",
-          )}
-        >
-          <span className="block text-xs opacity-70">{speakers[message.role as keyof typeof speakers]}</span>
-          {messageText(message)}
-        </li>
+      {turns.map((turn) => (
+        <TranscriptBubble key={turn.key} speaker={turn.speaker}>
+          {turn.text}
+        </TranscriptBubble>
       ))}
     </ol>
   );

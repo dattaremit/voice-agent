@@ -1,4 +1,3 @@
-import { LiveCallLoader } from "@/components/live-call/live-call-loader";
 import { PageHeading } from "@/components/layout/page-heading";
 import { DetailList } from "@/components/shared/detail-list";
 import { SectionCard } from "@/components/shared/section-card";
@@ -6,6 +5,7 @@ import { visitDetailItems } from "@/components/visits/visit-detail-items";
 import { getCall } from "@/lib/repositories/calls";
 import { getVisit } from "@/lib/repositories/visits";
 import { requireRecord, requireRouteId } from "@/lib/route-id";
+import { CallStage } from "./call-stage";
 import { CallStatusBadge } from "./call-status-badge";
 
 export async function CallOverview({ params }: { params: Promise<{ id: string }> }) {
@@ -17,11 +17,7 @@ export async function CallOverview({ params }: { params: Promise<{ id: string }>
         <PageHeading title={`Follow-up with ${visit.patientName}`} description={visit.reason} />
         <CallStatusBadge status={call.status} />
       </div>
-      {call.status === "scheduled" && (
-        <SectionCard title="Live call">
-          <LiveCallLoader callId={call.id} />
-        </SectionCard>
-      )}
+      <CallStage callId={call.id} patientId={visit.patientId} status={call.status} />
       <SectionCard title="Visit details">
         <DetailList items={visitDetailItems(visit)} />
       </SectionCard>

@@ -1,9 +1,9 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { callSummaries, calls, visits } from "@/lib/db/schema";
 import type { CallSummary } from "@/lib/schemas/call-summary";
 
-export const listRecentSummariesForPatient = (patientId: string, limit: number) =>
+export const listRecentSummariesForPatient = (patientId: string, limit: number, excludeCallId?: string) =>
   db
     .select({
       date: callSummaries.createdAt,
@@ -16,6 +16,7 @@ export const listRecentSummariesForPatient = (patientId: string, limit: number) 
     .from(callSummaries)
     .innerJoin(calls, eq(callSummaries.callId, calls.id))
     .innerJoin(visits, and(eq(calls.visitId, visits.id), eq(visits.patientId, patientId)))
+    .where(excludeCallId ? ne(calls.id, excludeCallId) : undefined)
     .orderBy(desc(callSummaries.createdAt))
     .limit(limit);
 
