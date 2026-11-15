@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.task import PipelineParams, PipelineTask
@@ -31,7 +33,13 @@ def _user_params() -> LLMUserAggregatorParams:
     )
 
 
-def build_call_task(transport: BaseTransport, context: CallContext, settings: Settings) -> PipelineTask:
+@dataclass(frozen=True)
+class CallSession:
+    task: PipelineTask
+    conversation: LLMContext
+
+
+def build_call_session(transport: BaseTransport, context: CallContext, settings: Settings) -> CallSession:
     conversation = LLMContext(messages=[{"role": "user", "content": CALL_OPENING}], tools=CALL_TOOLS_SCHEMA)
     aggregators = LLMContextAggregatorPair(conversation, user_params=_user_params())
     llm = create_llm(settings, build_system_prompt(context))
@@ -47,8 +55,9 @@ def build_call_task(transport: BaseTransport, context: CallContext, settings: Se
             aggregators.assistant(),
         ]
     )
-    return PipelineTask(
+    task = PipelineTask(
         pipeline,
         params=PipelineParams(enable_metrics=True, enable_usage_metrics=True),
         observers=[PromptCacheObserver()],
     )
+    return CallSession(task=task, conversation=conversation)

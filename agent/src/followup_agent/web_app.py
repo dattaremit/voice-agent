@@ -27,3 +27,7 @@ async def start_call(call_id: str) -> CallContext:
 
 async def record_answer(call_id: str, question_key: str, value: str) -> None:
     await _post(f"/api/calls/{call_id}/answers", {"questionKey": question_key, "value": value})
+
+
+async def complete_call(call_id: str, turns: list[dict[str, str]]) -> None:
+    await _post(f"/api/calls/{call_id}/complete", {"turns": turns})

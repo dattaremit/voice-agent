@@ -1,5 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
-import { db } from "@/lib/db/client";
+import { db, type DbExecutor } from "@/lib/db/client";
 import { calls } from "@/lib/db/schema";
 
 export const createCall = async (visitId: string) => {
@@ -27,6 +27,15 @@ export const markCallStarted = async (id: string) => {
     .update(calls)
     .set({ status: "in_progress", startedAt: new Date() })
     .where(and(eq(calls.id, id), eq(calls.status, "scheduled")))
+    .returning({ id: calls.id, visitId: calls.visitId });
+  return call;
+};
+
+export const markCallEnded = async (id: string, status: "completed" | "failed", executor: DbExecutor = db) => {
+  const [call] = await executor
+    .update(calls)
+    .set({ status, endedAt: new Date() })
+    .where(and(eq(calls.id, id), eq(calls.status, "in_progress")))
     .returning({ id: calls.id, visitId: calls.visitId });
   return call;
 };

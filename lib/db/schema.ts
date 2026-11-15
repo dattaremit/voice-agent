@@ -1,4 +1,4 @@
-import { date, jsonb, pgEnum, pgTable, text } from "drizzle-orm/pg-core";
+import { date, integer, jsonb, pgEnum, pgTable, text } from "drizzle-orm/pg-core";
 import { createdAt, id, reference, timestampColumn } from "./columns";
 
 export const callStatus = pgEnum("call_status", ["scheduled", "in_progress", "completed", "failed"]);
@@ -35,6 +35,7 @@ export const calls = pgTable("calls", {
 export const callTurns = pgTable("call_turns", {
   id: id(),
   callId: reference(() => calls.id),
+  position: integer().notNull(),
   role: turnRole().notNull(),
   text: text().notNull(),
   createdAt: createdAt(),

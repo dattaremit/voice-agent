@@ -10,3 +10,5 @@ const sql = globalForDb.sql ?? postgres(env.DATABASE_URL);
 if (process.env.NODE_ENV !== "production") globalForDb.sql = sql;
 
 export const db = drizzle(sql, { schema, casing: "snake_case" });
+
+export type DbExecutor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
