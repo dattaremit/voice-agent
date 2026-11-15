@@ -1,0 +1,17 @@
+[project]
+name = "followup-agent"
+version = "0.1.0"
+description = "Patient follow-up voice agent"
+authors = [
+    { name = "Herdoy Almamun", email = "herdoy.dev@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "httpx>=0.28.1",
+    "pipecat-ai[anthropic,cartesia,deepgram,runner,silero,webrtc]>=1.16.0",
+    "pydantic-settings>=2.16.3",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.1,<0.14.0"]
+build-backend = "uv_build"

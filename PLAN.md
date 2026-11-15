@@ -12,7 +12,7 @@ The agent calls a patient after a visit, asks a fixed set of follow-up questions
 | Validation | Zod (shared schemas for forms, API and the summary) |
 | Voice agent | Python 3.13 + **Pipecat 1.2**, managed with `uv` |
 | Transport | Pipecat SmallWebRTC (browser mic, no extra key); Twilio phone calls later |
-| Turn detection | Silero VAD + Smart Turn v3.2 (runs locally) |
+| Turn detection | Deepgram Flux end-of-turn + LLM turn-completion marker (● / ◐ / ○) + Silero VAD for barge-in |
 | STT / LLM / TTS | Deepgram Flux / Claude Haiku 5.5 / Cartesia Sonic-3 |
 | Summary | Claude Sonnet 5.5, structured output validated with Zod |
 | Auth | None for now |
@@ -106,7 +106,7 @@ Two separate mechanisms, each doing one job.
 
 1. **Foundation**: shadcn init, Winter theme, Postgres, Drizzle schema + migrations, seed script, env validation.
 2. **Dashboard**: visits list, visit detail, call history, start-call Server Action.
-3. **Voice agent**: Pipecat pipeline (VAD + Smart Turn + Deepgram + Claude + Cartesia), browser connect, live transcript, call context endpoint, prompt caching with cache-hit logging.
+3. **Voice agent**: Pipecat pipeline (VAD + Flux turn detection + LLM completion marker + Claude + Cartesia), browser connect, live transcript, call context endpoint, prompt caching with cache-hit logging.
 4. **Question flow**: tool-based answer capture, identity check, red-flag escalation.
 5. **Summary**: completion webhook, Sonnet summary, clinician summary page with triage badge and previous-calls comparison.
 6. **Polish**: barge-in tuning, error/empty states, call retry, optional Twilio outbound.
@@ -122,5 +122,5 @@ bun run db:migrate
 bun run db:seed
 bun dev
 
-cd agent && uv sync && uv run main.py
+bun run agent
 ```

@@ -1,3 +1,4 @@
+import { LiveCallLoader } from "@/components/live-call/live-call-loader";
 import { PageHeading } from "@/components/layout/page-heading";
 import { DetailList } from "@/components/shared/detail-list";
 import { SectionCard } from "@/components/shared/section-card";
@@ -16,6 +17,11 @@ export async function CallOverview({ params }: { params: Promise<{ id: string }>
         <PageHeading title={`Follow-up with ${visit.patientName}`} description={visit.reason} />
         <CallStatusBadge status={call.status} />
       </div>
+      {call.status === "scheduled" && (
+        <SectionCard title="Live call">
+          <LiveCallLoader callId={call.id} />
+        </SectionCard>
+      )}
       <SectionCard title="Visit details">
         <DetailList items={visitDetailItems(visit)} />
       </SectionCard>
