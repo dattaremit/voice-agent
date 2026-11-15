@@ -1,10 +1,13 @@
 from pipecat.services.anthropic.llm import AnthropicLLMService
 from pipecat.services.cartesia.tts import CartesiaTTSService
 from pipecat.services.deepgram.flux.stt import DeepgramFluxSTTService
+from pipecat.utils.text.transforms.replacements import replace_text
 
 from followup_agent.config import Settings
 
 MAX_REPLY_TOKENS = 400
+
+SPOKEN_FORMS = replace_text([(r"\b911\b", "nine one one")])
 
 
 def create_stt(settings: Settings) -> DeepgramFluxSTTService:
@@ -33,4 +36,5 @@ def create_tts(settings: Settings) -> CartesiaTTSService:
             model=settings.cartesia_model,
             voice=settings.cartesia_voice_id,
         ),
+        text_transforms=[("*", SPOKEN_FORMS)],
     )

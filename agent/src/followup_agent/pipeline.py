@@ -15,6 +15,7 @@ from pipecat.turns.user_turn_strategies import (
 
 from followup_agent.ai_services import create_llm, create_stt, create_tts
 from followup_agent.cache_observer import PromptCacheObserver
+from followup_agent.call_tools import CALL_TOOLS_SCHEMA, CallTools
 from followup_agent.call_context import CallContext
 from followup_agent.config import Settings
 from followup_agent.prompt import build_system_prompt
@@ -31,14 +32,16 @@ def _user_params() -> LLMUserAggregatorParams:
 
 
 def build_call_task(transport: BaseTransport, context: CallContext, settings: Settings) -> PipelineTask:
-    conversation = LLMContext(messages=[{"role": "user", "content": CALL_OPENING}])
+    conversation = LLMContext(messages=[{"role": "user", "content": CALL_OPENING}], tools=CALL_TOOLS_SCHEMA)
     aggregators = LLMContextAggregatorPair(conversation, user_params=_user_params())
+    llm = create_llm(settings, build_system_prompt(context))
+    CallTools(context.call_id).register(llm)
     pipeline = Pipeline(
         [
             transport.input(),
             create_stt(settings),
             aggregators.user(),
-            create_llm(settings, build_system_prompt(context)),
+            llm,
             create_tts(settings),
             transport.output(),
             aggregators.assistant(),
