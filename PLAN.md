@@ -25,7 +25,7 @@ Drizzle over Prisma: no codegen step, no engine binary, SQL-first schema in Type
 voice-agent/
 ├─ app/                         Next.js routes (pages + route handlers only)
 │  ├─ page.tsx                  Dashboard: patients and recent calls
-│  ├─ patients/[id]/page.tsx    Patient detail + "Start follow-up call"
+│  ├─ visits/[id]/page.tsx      Visit detail + "Start follow-up call"
 │  ├─ calls/[id]/page.tsx       Live call screen, then clinician summary
 │  └─ api/calls/[id]/complete/route.ts   Webhook from the agent
 ├─ components/
@@ -85,7 +85,7 @@ voice-agent/
 ## Milestones
 
 1. **Foundation**: shadcn init, Winter theme, Postgres, Drizzle schema + migrations, seed script, env validation.
-2. **Dashboard**: patients list, patient detail, visits, create-call Server Action.
+2. **Dashboard**: visits list, visit detail, call history, start-call Server Action.
 3. **Voice agent**: Pipecat pipeline (VAD + Smart Turn + Deepgram + Claude + Cartesia), browser connect, live transcript.
 4. **Question flow**: tool-based answer capture, identity check, red-flag escalation.
 5. **Summary**: completion webhook, Sonnet summary, clinician summary page with triage badge.
