@@ -36,7 +36,7 @@ export const markCallEnded = async (id: string, status: "completed" | "failed", 
     .update(calls)
     .set({ status, endedAt: new Date() })
     .where(and(eq(calls.id, id), eq(calls.status, "in_progress")))
-    .returning({ id: calls.id, visitId: calls.visitId });
+    .returning({ id: calls.id, visitId: calls.visitId, status: calls.status });
   return call;
 };
 
