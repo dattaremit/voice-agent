@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { calls } from "@/lib/db/schema";
 
@@ -19,6 +19,15 @@ export const getCall = async (id: string) => {
     .select({ id: calls.id, status: calls.status, visitId: calls.visitId, createdAt: calls.createdAt })
     .from(calls)
     .where(eq(calls.id, id));
+  return call;
+};
+
+export const markCallStarted = async (id: string) => {
+  const [call] = await db
+    .update(calls)
+    .set({ status: "in_progress", startedAt: new Date() })
+    .where(and(eq(calls.id, id), eq(calls.status, "scheduled")))
+    .returning({ id: calls.id, visitId: calls.visitId });
   return call;
 };
 

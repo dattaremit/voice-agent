@@ -73,7 +73,7 @@ Two separate mechanisms, each doing one job.
 
 **Memory across calls (Postgres).**
 - Every call stores its transcript, answers and summary.
-- At call start the agent fetches `GET /api/calls/[id]/context`: the visit, the patient, and the last 3 call summaries with key answers (pain score, medication adherence, open red flags).
+- At call start the agent calls `POST /api/calls/[id]/start` (bearer `AGENT_WEBHOOK_SECRET`): the call moves to `in_progress` and the response carries the visit, the patient, and the last 3 call summaries (triage, pain and symptoms, medication adherence, red flags).
 - That context is injected into the system prompt, so the agent opens with continuity ("Last week your pain was 6/10, how is it today?").
 - Summaries are injected, never raw transcripts: smaller prompts, less exposed PHI, better focus.
 
@@ -115,6 +115,7 @@ Two separate mechanisms, each doing one job.
 
 ```bash
 cp .env.example .env
+sed -i '' "s/^AGENT_WEBHOOK_SECRET=.*/AGENT_WEBHOOK_SECRET=$(openssl rand -hex 32)/" .env
 createdb voice_agent
 bun install
 bun run db:migrate

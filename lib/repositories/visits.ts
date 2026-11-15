@@ -20,6 +20,7 @@ export const getVisit = async (id: string) => {
   const [visit] = await visitsWithPatients({
     ...visitSummary,
     notes: visits.notes,
+    patientId: patients.id,
     patientDateOfBirth: patients.dateOfBirth,
     patientPhone: patients.phone,
   }).where(eq(visits.id, id));
