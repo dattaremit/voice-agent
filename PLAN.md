@@ -59,13 +59,33 @@ voice-agent/
 ## Call flow
 
 1. Clinician opens a patient visit and clicks **Start follow-up call**. A Server Action creates a `calls` row.
-2. The browser connects to the agent over WebRTC, passing `callId` and the visit context.
+2. The browser connects to the agent over WebRTC, passing `callId`; the agent loads the patient context (see below).
 3. The agent verifies identity (name + date of birth), then works through the questions:
    overall feeling → pain 0–10 → medications taken / side effects → visit-specific symptoms → red-flag check → questions for the clinician.
 4. Each answer is recorded through a tool call (`record_answer(key, value)`), so no question is skipped.
 5. A red flag (chest pain, heavy bleeding, high fever, breathing trouble, self-harm) stops the script. The agent gives emergency instructions and marks the call urgent.
 6. When the call ends, the agent posts the transcript and answers to `/api/calls/[id]/complete` (signed with `AGENT_WEBHOOK_SECRET`).
 7. The web app generates the summary with Sonnet 5.5, validates it with Zod, stores it, and the call page shows the clinician view.
+
+## Patient memory and prompt caching
+
+Two separate mechanisms, each doing one job.
+
+**Memory across calls (Postgres).**
+- Every call stores its transcript, answers and summary.
+- At call start the agent fetches `GET /api/calls/[id]/context`: the visit, the patient, and the last 3 call summaries with key answers (pain score, medication adherence, open red flags).
+- That context is injected into the system prompt, so the agent opens with continuity ("Last week your pain was 6/10, how is it today?").
+- Summaries are injected, never raw transcripts: smaller prompts, less exposed PHI, better focus.
+
+**Speed and cost within a call (Claude prompt caching).**
+- The cache lives at most 1 hour, so it does not replace memory; it makes every turn of a live call cheaper and faster to first token.
+- Prompt order is fixed from most to least stable:
+  1. Static instructions + question flow + tool definitions (explicit cache breakpoint)
+  2. Patient context block (stable for the whole call)
+  3. Conversation so far (automatic caching moves the breakpoint forward each turn)
+  4. Latest patient utterance
+- Nothing volatile (timestamps, ids) goes before the breakpoints; the call date lives in the patient context block, written once.
+- The agent logs `cache_read_input_tokens` per turn; zero reads after turn 2 is treated as a bug.
 
 ## Winter theme
 
@@ -86,9 +106,9 @@ voice-agent/
 
 1. **Foundation**: shadcn init, Winter theme, Postgres, Drizzle schema + migrations, seed script, env validation.
 2. **Dashboard**: visits list, visit detail, call history, start-call Server Action.
-3. **Voice agent**: Pipecat pipeline (VAD + Smart Turn + Deepgram + Claude + Cartesia), browser connect, live transcript.
+3. **Voice agent**: Pipecat pipeline (VAD + Smart Turn + Deepgram + Claude + Cartesia), browser connect, live transcript, call context endpoint, prompt caching with cache-hit logging.
 4. **Question flow**: tool-based answer capture, identity check, red-flag escalation.
-5. **Summary**: completion webhook, Sonnet summary, clinician summary page with triage badge.
+5. **Summary**: completion webhook, Sonnet summary, clinician summary page with triage badge and previous-calls comparison.
 6. **Polish**: barge-in tuning, error/empty states, call retry, optional Twilio outbound.
 
 ## Getting started
