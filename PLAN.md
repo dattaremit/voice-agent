@@ -1,4 +1,4 @@
-# Maple Grove Scheduling Voice Agent
+# Midi Scheduling Voice Agent
 
 A patient talks to Ava from a laptop browser. Ava verifies who they are, collects basic intake, finds open times, and books, reschedules or cancels clinician appointments against a mocked scheduler. It never gives medical advice and escalates emergencies. After the call, the care team sees a summary, the intake answers, the appointment changes and the transcript.
 

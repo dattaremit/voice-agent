@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Maple Grove Scheduling",
+  title: "Midi Scheduling",
   description: "Voice agent that schedules clinician appointments and collects basic intake.",
 };
 
