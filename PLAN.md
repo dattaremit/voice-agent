@@ -1,116 +1,121 @@
-# Patient Follow-Up Voice Agent — Plan
+# Maple Grove Scheduling Voice Agent
 
-The agent calls a patient after a visit, asks a fixed set of follow-up questions, and writes a summary for the clinician.
+A patient talks to Ava from a laptop browser. Ava verifies who they are, collects basic intake, finds open times, and books, reschedules or cancels clinician appointments against a mocked scheduler. It never gives medical advice and escalates emergencies. After the call, the care team sees a summary, the intake answers, the appointment changes and the transcript.
+
+## How a call flows
+
+```
+Browser mic ──WebRTC──▶ Pipecat agent (Python)
+                         ├─ Silero VAD            barge-in
+                         ├─ Deepgram Flux         speech to text + end of turn
+                         ├─ LLM turn marker ● ◐ ○ waits when the patient is mid-thought
+                         ├─ GPT-6.1 Terra         conversation + tool calls
+                         └─ Cartesia Sonic-3      text to speech ──WebRTC──▶ Browser speaker
+                                   │
+                         tool calls (bearer token, scoped to one call)
+                                   ▼
+                         Next.js API ──▶ Postgres (patients, clinicians, appointments, calls)
+                                   │
+                         call ends ─▶ transcript saved ─▶ GPT-6.1 Sol summary (background)
+```
+
+1. The scheduling desk page creates a call; the browser connects to the agent over WebRTC.
+2. `POST /api/calls/:id/start` marks the call in progress and returns today's date, clinic hours and clinicians.
+3. Ava asks for full name and date of birth and calls `identify_patient`. Only after a match can the call book or cancel, and only for that patient.
+4. For a new booking Ava asks five intake questions, saving each with `record_intake`.
+5. `find_available_slots` filters by clinician, specialty, date and morning or afternoon. Ava offers at most two options and books only after the patient confirms the read-back.
+6. Rescheduling books the new time first, then cancels the old one, so the patient never loses their place.
+7. Emergency symptoms stop scheduling: Ava tells the caller to call 911, records a red flag and ends the call.
+8. When the call ends, the transcript is saved and a structured summary with a triage level is generated in the background.
+
+## Core components and how to change them
+
+| Component | Where | What to change |
+|---|---|---|
+| Clinic hours, slot length, booking window | `lib/scheduling/clinic-hours.ts` | Constants |
+| Slot generation, time zones | `lib/scheduling/slot-grid.ts`, `zoned-time.ts` | Pure functions, no clock or DB access |
+| Availability | `lib/services/availability.ts` | Slot grid minus booked appointments |
+| Double-booking guard | `appointments_clinician_slot_booked` partial unique index | Enforced by Postgres, not by the model |
+| Agent API | `app/api/calls/[id]/*` | Bearer auth, call must be in progress, booking requires an identified patient |
+| Agent behaviour | `agent/src/scheduling_agent/instructions.py` | Call flow, tool rules, safety rules |
+| Intake questions | `agent/src/scheduling_agent/questions.py` | One list drives the prompt and the tool's allowed keys |
+| Tools | `agent/src/scheduling_agent/call_tools.py` | JSON schemas plus thin handlers that call the API |
+| Models | `.env` (`OPENAI_CALL_MODEL`, `OPENAI_SUMMARY_MODEL`) | Swap without code changes |
+| Speech pronunciations | `agent/src/scheduling_agent/ai_services.py` | Text transforms before TTS, e.g. 911 → "nine one one" |
+
+The model only decides what to say and which tool to call. Every rule that must always hold (identity before booking, valid slot, no double booking, own appointments only) is enforced in code and in the database.
 
 ## Stack
 
-| Layer | Choice |
-|---|---|
-| Web app | Next.js 16 (App Router, Server Actions), React 19, TypeScript, Bun |
-| UI | shadcn/ui + Tailwind v4, custom **Winter** theme, fully rounded buttons |
-| Database | PostgreSQL 17 (local Homebrew) + **Drizzle ORM** + `postgres` driver |
-| Validation | Zod (shared schemas for forms, API and the summary) |
-| Voice agent | Python 3.13 + **Pipecat 1.2**, managed with `uv` |
-| Transport | Pipecat SmallWebRTC (browser mic, no extra key); Twilio phone calls later |
-| Turn detection | Deepgram Flux end-of-turn + LLM turn-completion marker (● / ◐ / ○) + Silero VAD for barge-in |
-| STT / LLM / TTS | Deepgram Flux / OpenAI GPT-6.1 Terra at low reasoning effort (Responses API over WebSocket) / Cartesia Sonic-3 |
-| Summary | OpenAI GPT-6.1 Sol, structured output validated with Zod |
-| Auth | None for now |
+| Layer | Choice | Why |
+|---|---|---|
+| Voice pipeline | Pipecat 1.16 (Python, `uv`) | Streaming STT, LLM and TTS with turn-taking and interruptions |
+| Transport | SmallWebRTC in the browser | Laptop demo, no phone integration needed |
+| STT | Deepgram Flux | Lowest-latency streaming with built-in end-of-turn detection |
+| LLM (call) | OpenAI GPT-6.1 Terra, low reasoning effort, Responses API over WebSocket | Followed the call flow reliably; Luna was faster but skipped steps |
+| LLM (summary) | OpenAI GPT-6.1 Sol, structured output | Runs after the call, so quality over speed |
+| TTS | Cartesia Sonic-3 | About 0.4 s to first audio |
+| Web app | Next.js 16, React 19, shadcn/ui (Winter theme) | Scheduling desk, live transcript, call review |
+| Data | PostgreSQL 17 + Drizzle ORM | Transactions and the unique index that prevents double booking |
 
-Drizzle over Prisma: no codegen step, no engine binary, SQL-first schema in TypeScript, fast cold starts.
+## Measured in this build
 
-## Repository layout
+- Time to first token: GPT-6.1 Terra about 1.3 s, Cartesia about 0.4 s.
+- Prompt cache reads on every turn after the first.
+- Scripted scenarios passing: new booking with intake, reschedule, emergency escalation, unknown caller.
+- API checks: unauthenticated 401, booking before identity 403, double booking 409, outside hours 409, cancelling another patient's appointment 404.
 
-```
-voice-agent/
-├─ app/                         Next.js routes (pages + route handlers only)
-│  ├─ page.tsx                  Dashboard: patients and recent calls
-│  ├─ visits/[id]/page.tsx      Visit detail + "Start follow-up call"
-│  ├─ calls/[id]/page.tsx       Live call screen, then clinician summary
-│  └─ api/calls/[id]/complete/route.ts   Webhook from the agent
-├─ components/
-│  ├─ ui/                       shadcn primitives (generated, single source)
-│  └─ <feature>/                One component per file, composed from ui/
-├─ lib/
-│  ├─ db/{client,schema}.ts
-│  ├─ env.ts                    Zod-validated env, imported everywhere
-│  ├─ repositories/             One file per table: all queries live here
-│  ├─ services/                 Business logic (summary generation, triage)
-│  └─ schemas/                  Zod schemas shared by UI, API and services
-├─ agent/                       Python Pipecat service
-│  ├─ main.py                   HTTP + WebRTC entrypoint
-│  ├─ pipeline.py               Builds the Pipecat pipeline
-│  ├─ questions.py              The follow-up question flow
-│  ├─ red_flags.py              Escalation detection
-│  └─ reporter.py               Sends transcript + answers to the web app
-├─ drizzle/                     Generated migrations
-└─ .env.example
-```
+## Production design
 
-## Data model
+### Authentication and access
+- Patients: caller ID plus date of birth, then a one-time code by SMS before any change to an appointment.
+- Staff: SSO (OIDC) with role-based access; clinicians see their own schedule.
+- Agent to API: replace the shared secret with short-lived tokens minted per call and scoped to that call and patient, over mTLS.
 
-- **patients**: id, name, dateOfBirth, phone, createdAt
-- **visits**: id, patientId, visitDate, reason, clinicianName, notes
-- **calls**: id, visitId, status (`scheduled | in_progress | completed | failed`), startedAt, endedAt
-- **call_turns**: id, callId, role (`agent | patient`), text, createdAt
-- **call_answers**: id, callId, questionKey, value (jsonb)
-- **call_summaries**: id, callId, triageLevel (`routine | follow_up | urgent`), summary, symptoms (jsonb), medicationAdherence, redFlags (jsonb), actions (jsonb), createdAt
+### Privacy, HIPAA and PHI
+- Business associate agreements with every vendor that touches audio or text: OpenAI, Deepgram, Cartesia, the WebRTC or telephony provider, hosting.
+- `store: false` on every OpenAI request; zero-retention settings at each vendor where offered.
+- Minimum necessary: the model sees only the identified patient's own appointments, never other patients.
+- Encryption in transit and at rest (KMS), audit log of every tool call and data access, retention policy for audio and transcripts.
+- Debug logging of prompts is turned off in production; logs are redacted.
 
-## Call flow
+### Reliability
+- Database constraints, not the model, prevent double booking; booking requests carry idempotency keys so retries are safe.
+- Real scheduling via the EHR's FHIR `Slot` and `Appointment` APIs behind the same service interface, with timeouts and a circuit breaker.
+- Fallback providers for STT, LLM and TTS; if the agent fails, offer a human transfer or a callback.
+- Health checks and alerts on call failures, tool errors and latency.
 
-1. Clinician opens a patient visit and clicks **Start follow-up call**. A Server Action creates a `calls` row.
-2. The browser connects to the agent over WebRTC, passing `callId`; the agent loads the patient context (see below).
-3. The agent verifies identity (name + date of birth), then works through the questions:
-   overall feeling → pain 0–10 → medications taken / side effects → visit-specific symptoms → red-flag check → questions for the clinician.
-4. Each answer is recorded through a tool call (`record_answer(key, value)`), so no question is skipped.
-5. A red flag (chest pain, heavy bleeding, high fever, breathing trouble, self-harm) stops the script. The agent gives emergency instructions and marks the call urgent.
-6. When the call ends, the agent posts the transcript and answers to `/api/calls/[id]/complete` (signed with `AGENT_WEBHOOK_SECRET`).
-7. The web app generates the summary with Sonnet 5.5, validates it with Zod, stores it, and the call page shows the clinician view.
+### Scale: 1,000 clinicians, 1 million patients
+- About 3 calls per patient per year is 3 million calls a year, roughly 8,000 a day. With 15 % in the peak hour and 4-minute calls, that is about 80 concurrent calls; plan capacity for 300.
+- Agent workers are stateless, so they scale horizontally behind a WebRTC or SIP provider.
+- Postgres with indexes on clinician and start time and on patient, read replicas for availability, and a queue for summaries.
 
-## Patient memory and prompt caching
+### Latency
+- Budget per turn: end of turn about 0.3 s, model first token about 1.3 s, speech first audio about 0.4 s, under 2 s in total.
+- Levers: prompt caching (already on), incremental context over WebSocket (already on), a short spoken filler while tools run, same-region deployment, eager end-of-turn.
 
-Two separate mechanisms, each doing one job.
+### Evaluations
+- The scripted patient harness runs scenario suites: booking, reschedule, cancel, unknown caller, emergency, a request for medical advice, a prompt-injection attempt, noisy or accented audio.
+- Deterministic checks on the resulting database state (right slot, right patient, no double booking), plus an LLM judge for tone and guardrails.
+- Tracked: task success, correct tool calls, guardrail adherence, latency p50 and p95, transcription accuracy on names and dates. Runs in CI before any prompt or model change ships.
 
-**Memory across calls (Postgres).**
-- Every call stores its transcript, answers and summary.
-- At call start the agent calls `POST /api/calls/[id]/start` (bearer `AGENT_WEBHOOK_SECRET`): the call moves to `in_progress` and the response carries the visit, the patient, and the last 3 call summaries (triage, pain and symptoms, medication adherence, red flags).
-- That context is injected into the system prompt, so the agent opens with continuity ("Last week your pain was 6/10, how is it today?").
-- Summaries are injected, never raw transcripts: smaller prompts, less exposed PHI, better focus.
+### Rollout
+1. Internal staff test calls.
+2. Shadow mode: the agent proposes, a scheduler confirms.
+3. One clinic, after-hours only, with human handoff always available.
+4. Gradual percentage rollout behind a feature flag, with a kill switch.
 
-**Speed and cost within a call (OpenAI prompt caching).**
-- The cache is short-lived, so it does not replace memory; it makes every turn of a live call cheaper and faster to first token.
-- OpenAI caches the longest matching prompt prefix automatically, and the WebSocket Responses session sends only the new turn via `previous_response_id` with `store=false`.
-- Prompt order is fixed from most to least stable:
-  1. Static instructions + question flow + tool definitions
-  2. Patient context block (stable for the whole call)
-  3. Conversation so far
-  4. Latest patient utterance
-- Nothing volatile (timestamps, ids) goes into the stable prefix; the call date lives in the patient context block, written once.
-- The agent logs `cache_read_input_tokens` per turn; zero reads after turn 2 is treated as a bug.
-
-## Winter theme
-
-- Light: frost-white background, glacier-blue primary, slate text, pale ice cards.
-- Dark: polar-night navy background, aurora-teal accent, soft snow foreground.
-- Defined once as CSS variables in `app/globals.css`; components only use tokens.
-- `Button` base class uses `rounded-full`; inputs and cards use the shared `--radius`.
+### Success metrics
+- Share of calls fully handled without a human, and time to book.
+- Booking errors (target zero) and emergency escalation recall (target 100 %).
+- Abandonment rate, transfer rate, patient satisfaction, no-show rate.
+- Latency p95 under 2.5 s and cost per call.
 
 ## Code rules
 
 - No comments in code.
-- Single responsibility: one component, hook, repository or service per file, each doing one thing.
-- No duplication: shared UI goes in `components/ui` or a feature component, shared logic in `lib/`, shared types come from Zod schemas.
-- Database access only through `lib/repositories`.
-- Env access only through `lib/env.ts` (web) and `agent/config.py` (agent).
-
-## Milestones
-
-1. **Foundation**: shadcn init, Winter theme, Postgres, Drizzle schema + migrations, seed script, env validation.
-2. **Dashboard**: visits list, visit detail, call history, start-call Server Action.
-3. **Voice agent**: Pipecat pipeline (VAD + Flux turn detection + LLM completion marker + OpenAI + Cartesia), browser connect, live transcript, call context endpoint, prompt caching with cache-hit logging.
-4. **Question flow**: tool-based answer capture, identity check, red-flag escalation.
-5. **Summary**: completion webhook, Sonnet summary, clinician summary page with triage badge and previous-calls comparison.
-6. **Polish**: barge-in tuning, error/empty states, call retry, optional Twilio outbound.
+- One responsibility per file; no duplicated logic or UI.
+- Database access only through `lib/repositories`; environment access only through `lib/env.ts` and `agent/src/scheduling_agent/config.py`.
 
 ## Getting started
 
@@ -121,7 +126,9 @@ createdb voice_agent
 bun install
 bun run db:migrate
 bun run db:seed
+(cd agent && uv sync)
 bun dev
-
 bun run agent
 ```
+
+Open http://localhost:3000, click **Call the clinic**, then **Connect agent**, and talk to Ava. Sample patients: Maria Lopez (March 14, 1958), James Carter (July 2, 1971), Aisha Rahman (November 21, 1990).
