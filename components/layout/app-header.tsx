@@ -9,7 +9,7 @@ export function AppHeader() {
           <span className="grid size-8 place-items-center rounded-full bg-primary text-primary-foreground">
             <Snowflake className="size-4" />
           </span>
-          Patient Follow-Up
+          Maple Grove Scheduling
         </Link>
       </div>
     </header>

@@ -5,10 +5,10 @@ from pipecat.runner.types import RunnerArguments
 from pipecat.runner.utils import create_transport
 from pipecat.transports.base_transport import TransportParams
 
-from followup_agent.config import get_settings
-from followup_agent.pipeline import CALL_OPENING, CallSession, build_call_session
-from followup_agent.transcript import transcript_turns
-from followup_agent.web_app import complete_call, start_call
+from scheduling_agent.config import get_settings
+from scheduling_agent.pipeline import CALL_OPENING, CallSession, build_call_session
+from scheduling_agent.transcript import transcript_turns
+from scheduling_agent.web_app import complete_call, start_call
 
 TRANSPORT_PARAMS = {
     "webrtc": lambda: TransportParams(audio_in_enabled=True, audio_out_enabled=True),

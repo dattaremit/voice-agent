@@ -1,7 +1,7 @@
 from pipecat.runner import run
 
-from followup_agent.bot import bot
-from followup_agent.config import get_settings
+from scheduling_agent.bot import bot
+from scheduling_agent.config import get_settings
 
 
 def main() -> None:

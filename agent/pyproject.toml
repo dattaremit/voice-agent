@@ -1,7 +1,7 @@
 [project]
-name = "followup-agent"
+name = "scheduling-agent"
 version = "0.1.0"
-description = "Patient follow-up voice agent"
+description = "Patient appointment scheduling voice agent"
 authors = [
     { name = "Herdoy Almamun", email = "herdoy.dev@gmail.com" }
 ]

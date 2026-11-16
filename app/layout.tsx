@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Patient Follow-Up",
-  description: "Voice agent that follows up with patients after a visit and summarizes the call for clinicians.",
+  title: "Maple Grove Scheduling",
+  description: "Voice agent that schedules clinician appointments and collects basic intake.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -15,14 +15,14 @@ from pipecat.turns.user_turn_strategies import (
     UserTurnStrategiesParams,
 )
 
-from followup_agent.ai_services import create_llm, create_stt, create_tts
-from followup_agent.cache_observer import PromptCacheObserver
-from followup_agent.call_tools import CALL_TOOLS_SCHEMA, CallTools
-from followup_agent.call_context import CallContext
-from followup_agent.config import Settings
-from followup_agent.prompt import build_system_prompt
+from scheduling_agent.ai_services import create_llm, create_stt, create_tts
+from scheduling_agent.cache_observer import PromptCacheObserver
+from scheduling_agent.call_tools import CALL_TOOLS_SCHEMA, CallTools
+from scheduling_agent.call_context import CallContext
+from scheduling_agent.config import Settings
+from scheduling_agent.prompt import build_system_prompt
 
-CALL_OPENING = "The patient has just answered the phone. Begin the call."
+CALL_OPENING = "A patient has just called the clinic. Greet them."
 
 
 def _user_params() -> LLMUserAggregatorParams:

@@ -3,7 +3,7 @@ from pipecat.services.deepgram.flux.stt import DeepgramFluxSTTService
 from pipecat.services.openai.responses.llm import OpenAIResponsesLLMService, OpenAIResponsesReasoningConfig
 from pipecat.utils.text.transforms.replacements import replace_text
 
-from followup_agent.config import Settings
+from scheduling_agent.config import Settings
 
 MAX_REPLY_TOKENS = 1500
 CALL_REASONING = OpenAIResponsesReasoningConfig(effort="low")
