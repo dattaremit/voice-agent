@@ -1,5 +1,5 @@
 [build]
-  command = "bun run build"
+  command = "bun run db:migrate && bun run db:seed-if-empty && bun run build"
   publish = ".next"
 
 [build.environment]

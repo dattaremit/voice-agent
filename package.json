@@ -12,7 +12,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "bun lib/db/seed.ts",
     "db:studio": "drizzle-kit studio",
-    "agent": "cd agent && uv run python -m scheduling_agent"
+    "agent": "cd agent && uv run python -m scheduling_agent",
+    "db:seed-if-empty": "bun lib/db/seed-if-empty.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

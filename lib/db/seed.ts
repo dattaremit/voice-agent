@@ -1,24 +1,13 @@
-import { bookableSlots } from "@/modules/scheduling/slot-grid";
 import { db } from "./client";
-import { appointments, calls, clinicians, patients } from "./schema";
-import { seedBookings, seedClinicians, seedPatients } from "./seed-data";
+import { calls, clinicians, patients } from "./schema";
+import { seedDatabase } from "./seed-database";
 
 await db.transaction(async (tx) => {
   await tx.delete(calls);
   await tx.delete(patients);
   await tx.delete(clinicians);
-  const patientRows = await tx.insert(patients).values(seedPatients).returning({ id: patients.id });
-  const clinicianRows = await tx.insert(clinicians).values(seedClinicians).returning({ id: clinicians.id });
-  const slots = bookableSlots(new Date());
-  await tx.insert(appointments).values(
-    seedBookings.map((booking) => ({
-      patientId: patientRows[booking.patient].id,
-      clinicianId: clinicianRows[booking.clinician].id,
-      startsAt: slots[booking.slot],
-      reason: booking.reason,
-    })),
-  );
+  await seedDatabase(tx);
 });
 
-console.log(`Seeded ${seedPatients.length} patients, ${seedClinicians.length} clinicians, ${seedBookings.length} appointments`);
+console.log("Database reset with sample data");
 process.exit(0);
