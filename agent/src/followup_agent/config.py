@@ -9,8 +9,8 @@ ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ENV_FILE, extra="ignore")
 
-    anthropic_api_key: str
-    anthropic_call_model: str
+    openai_api_key: str
+    openai_call_model: str
     deepgram_api_key: str
     deepgram_model: str
     cartesia_api_key: str

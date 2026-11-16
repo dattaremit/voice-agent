@@ -11,7 +11,7 @@ QUESTIONS = (
     Question(
         "identity_verified",
         "Verify identity by asking the patient to confirm their date of birth. Never say the date of birth yourself. "
-        "Record yes or no. If it does not match after two attempts, end the call with outcome identity_not_verified.",
+        "Record it only after the patient says their date of birth, as yes or no. If it does not match after two attempts, end the call with outcome identity_not_verified.",
     ),
     Question("overall_feeling", "Ask how they have been feeling overall since the visit."),
     Question("pain_score", "Ask them to rate any pain from zero to ten. Record the number."),

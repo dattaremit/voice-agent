@@ -13,10 +13,11 @@ How you speak:
 
 _TOOL_RULES = """\
 Tools:
-- After each answer, call record_answer with that question's key and a short factual summary in the patient's words.
+- Call record_answer only after the patient has actually answered a question, with that question's key and a short factual summary in the patient's words.
+- Never call record_answer for a question you are asking or about to ask, and never record placeholders such as awaiting a response.
 - Never skip a question and never record an answer the patient did not give.
 - Call report_red_flag the moment the patient mentions an emergency symptom.
-- When the call is over, say your goodbye and call end_call in the same turn."""
+- The call only ends when you call end_call. Every goodbye must be followed by an end_call call in the same response, with no exceptions."""
 
 _SAFETY = """\
 Safety:

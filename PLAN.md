@@ -13,8 +13,8 @@ The agent calls a patient after a visit, asks a fixed set of follow-up questions
 | Voice agent | Python 3.13 + **Pipecat 1.2**, managed with `uv` |
 | Transport | Pipecat SmallWebRTC (browser mic, no extra key); Twilio phone calls later |
 | Turn detection | Deepgram Flux end-of-turn + LLM turn-completion marker (● / ◐ / ○) + Silero VAD for barge-in |
-| STT / LLM / TTS | Deepgram Flux / Claude Haiku 5.5 / Cartesia Sonic-3 |
-| Summary | Claude Sonnet 5.5, structured output validated with Zod |
+| STT / LLM / TTS | Deepgram Flux / OpenAI GPT-6.1 Terra at low reasoning effort (Responses API over WebSocket) / Cartesia Sonic-3 |
+| Summary | OpenAI GPT-6.1 Sol, structured output validated with Zod |
 | Auth | None for now |
 
 Drizzle over Prisma: no codegen step, no engine binary, SQL-first schema in TypeScript, fast cold starts.
@@ -77,14 +77,15 @@ Two separate mechanisms, each doing one job.
 - That context is injected into the system prompt, so the agent opens with continuity ("Last week your pain was 6/10, how is it today?").
 - Summaries are injected, never raw transcripts: smaller prompts, less exposed PHI, better focus.
 
-**Speed and cost within a call (Claude prompt caching).**
-- The cache lives at most 1 hour, so it does not replace memory; it makes every turn of a live call cheaper and faster to first token.
+**Speed and cost within a call (OpenAI prompt caching).**
+- The cache is short-lived, so it does not replace memory; it makes every turn of a live call cheaper and faster to first token.
+- OpenAI caches the longest matching prompt prefix automatically, and the WebSocket Responses session sends only the new turn via `previous_response_id` with `store=false`.
 - Prompt order is fixed from most to least stable:
-  1. Static instructions + question flow + tool definitions (explicit cache breakpoint)
+  1. Static instructions + question flow + tool definitions
   2. Patient context block (stable for the whole call)
-  3. Conversation so far (automatic caching moves the breakpoint forward each turn)
+  3. Conversation so far
   4. Latest patient utterance
-- Nothing volatile (timestamps, ids) goes before the breakpoints; the call date lives in the patient context block, written once.
+- Nothing volatile (timestamps, ids) goes into the stable prefix; the call date lives in the patient context block, written once.
 - The agent logs `cache_read_input_tokens` per turn; zero reads after turn 2 is treated as a bug.
 
 ## Winter theme
@@ -106,7 +107,7 @@ Two separate mechanisms, each doing one job.
 
 1. **Foundation**: shadcn init, Winter theme, Postgres, Drizzle schema + migrations, seed script, env validation.
 2. **Dashboard**: visits list, visit detail, call history, start-call Server Action.
-3. **Voice agent**: Pipecat pipeline (VAD + Flux turn detection + LLM completion marker + Claude + Cartesia), browser connect, live transcript, call context endpoint, prompt caching with cache-hit logging.
+3. **Voice agent**: Pipecat pipeline (VAD + Flux turn detection + LLM completion marker + OpenAI + Cartesia), browser connect, live transcript, call context endpoint, prompt caching with cache-hit logging.
 4. **Question flow**: tool-based answer capture, identity check, red-flag escalation.
 5. **Summary**: completion webhook, Sonnet summary, clinician summary page with triage badge and previous-calls comparison.
 6. **Polish**: barge-in tuning, error/empty states, call retry, optional Twilio outbound.

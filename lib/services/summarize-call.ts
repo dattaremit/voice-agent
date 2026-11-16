@@ -1,11 +1,11 @@
-import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import { zodTextFormat } from "openai/helpers/zod";
 import { env } from "@/lib/env";
 import { listCallAnswers } from "@/lib/repositories/call-answers";
 import { insertCallSummary, listRecentSummariesForPatient } from "@/lib/repositories/call-summaries";
 import { listCallTurns } from "@/lib/repositories/call-turns";
 import { getVisit } from "@/lib/repositories/visits";
 import { callSummarySchema } from "@/lib/schemas/call-summary";
-import { anthropic } from "./anthropic";
+import { openai } from "./openai";
 import { SUMMARY_INSTRUCTIONS } from "./summary-instructions";
 import { buildSummaryPrompt } from "./summary-prompt";
 
@@ -23,17 +23,14 @@ async function loadSummaryInput(callId: string, visitId: string) {
 }
 
 export async function summarizeCall(callId: string, visitId: string) {
-  const response = await anthropic.beta.messages.parse({
-    model: env.ANTHROPIC_SUMMARY_MODEL,
-    max_tokens: 4000,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    output_config: { effort: "medium", format: betaZodOutputFormat(callSummarySchema) },
-    system: SUMMARY_INSTRUCTIONS,
-    messages: [{ role: "user", content: buildSummaryPrompt(await loadSummaryInput(callId, visitId)) }],
+  const response = await openai.responses.parse({
+    model: env.OPENAI_SUMMARY_MODEL,
+    store: false,
+    reasoning: { effort: "low" },
+    instructions: SUMMARY_INSTRUCTIONS,
+    input: buildSummaryPrompt(await loadSummaryInput(callId, visitId)),
+    text: { format: zodTextFormat(callSummarySchema, "call_summary") },
   });
-  if (response.stop_reason === "refusal" || !response.parsed_output) {
-    throw new Error(`Summary not generated for call ${callId}: ${response.stop_reason}`);
-  }
-  await insertCallSummary(callId, response.parsed_output);
+  if (!response.output_parsed) throw new Error(`Summary not generated for call ${callId}: ${response.status}`);
+  await insertCallSummary(callId, response.output_parsed);
 }

@@ -1,11 +1,12 @@
-from pipecat.services.anthropic.llm import AnthropicLLMService
 from pipecat.services.cartesia.tts import CartesiaTTSService
 from pipecat.services.deepgram.flux.stt import DeepgramFluxSTTService
+from pipecat.services.openai.responses.llm import OpenAIResponsesLLMService, OpenAIResponsesReasoningConfig
 from pipecat.utils.text.transforms.replacements import replace_text
 
 from followup_agent.config import Settings
 
-MAX_REPLY_TOKENS = 400
+MAX_REPLY_TOKENS = 1500
+CALL_REASONING = OpenAIResponsesReasoningConfig(effort="low")
 
 SPOKEN_FORMS = replace_text([(r"\b911\b", "nine one one")])
 
@@ -17,14 +18,14 @@ def create_stt(settings: Settings) -> DeepgramFluxSTTService:
     )
 
 
-def create_llm(settings: Settings, system_prompt: str) -> AnthropicLLMService:
-    return AnthropicLLMService(
-        api_key=settings.anthropic_api_key,
-        settings=AnthropicLLMService.Settings(
-            model=settings.anthropic_call_model,
+def create_llm(settings: Settings, system_prompt: str) -> OpenAIResponsesLLMService:
+    return OpenAIResponsesLLMService(
+        api_key=settings.openai_api_key,
+        settings=OpenAIResponsesLLMService.Settings(
+            model=settings.openai_call_model,
             system_instruction=system_prompt,
-            enable_prompt_caching=True,
-            max_tokens=MAX_REPLY_TOKENS,
+            max_completion_tokens=MAX_REPLY_TOKENS,
+            reasoning=CALL_REASONING,
         ),
     )
 

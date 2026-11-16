@@ -12,7 +12,7 @@ OUTCOME_KEY = "call_outcome"
 
 RECORD_ANSWER = FunctionSchema(
     name="record_answer",
-    description="Save the patient's answer to one follow-up question.",
+    description="Save the answer the patient just gave to one follow-up question. Only call it after the patient has answered.",
     properties={
         "question_key": {"type": "string", "enum": list(QUESTION_KEYS), "description": "The question answered."},
         "answer": {"type": "string", "description": "Short factual summary of the answer in the patient's words."},
@@ -29,7 +29,7 @@ REPORT_RED_FLAG = FunctionSchema(
 
 END_CALL = FunctionSchema(
     name="end_call",
-    description="Hang up after you have said goodbye.",
+    description="Hang up the call. Required right after every goodbye; the call stays open until this is called.",
     properties={"outcome": {"type": "string", "enum": list(CALL_OUTCOMES), "description": "Why the call ended."}},
     required=["outcome"],
 )
