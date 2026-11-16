@@ -1,16 +1,33 @@
 import { Suspense } from "react";
+import { AppointmentTable } from "@/components/appointments/appointment-table";
+import { APPOINTMENT_COLUMNS } from "@/components/appointments/appointment-columns";
+import { RecentCalls } from "@/components/calls/recent-calls";
+import { StartCallForm } from "@/components/calls/start-call-form";
 import { PageContainer } from "@/components/layout/page-container";
 import { PageHeading } from "@/components/layout/page-heading";
-import { VisitTable } from "@/components/visits/visit-table";
-import { VisitTableSkeleton } from "@/components/visits/visit-table-skeleton";
+import { PageSkeleton } from "@/components/shared/page-skeleton";
+import { SectionHeading } from "@/components/shared/section-heading";
+import { TableSkeleton } from "@/components/shared/table-skeleton";
 
 export default function Home() {
   return (
     <PageContainer>
-      <PageHeading title="Recent visits" description="Patients due for a post-visit follow-up call." />
-      <Suspense fallback={<VisitTableSkeleton />}>
-        <VisitTable />
-      </Suspense>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <PageHeading title="Scheduling desk" description="Patients call Ava to book, reschedule or cancel appointments." />
+        <StartCallForm />
+      </div>
+      <section className="space-y-4">
+        <SectionHeading title="Upcoming appointments" />
+        <Suspense fallback={<TableSkeleton columns={APPOINTMENT_COLUMNS} />}>
+          <AppointmentTable />
+        </Suspense>
+      </section>
+      <section className="space-y-4">
+        <SectionHeading title="Recent calls" />
+        <Suspense fallback={<PageSkeleton />}>
+          <RecentCalls />
+        </Suspense>
+      </section>
     </PageContainer>
   );
 }

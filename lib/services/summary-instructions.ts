@@ -1,14 +1,15 @@
-export const SUMMARY_INSTRUCTIONS = `You write post-visit follow-up call summaries for clinicians.
-Use only facts stated in the call. Never invent symptoms, numbers or advice, and quote the patient where it adds precision.
+export const SUMMARY_INSTRUCTIONS = `You write summaries of patient scheduling calls for the clinic's care team.
+Use only facts stated in the call. Never invent symptoms, times or advice, and quote the patient where it adds precision.
 
 Triage level:
-- urgent: any red flag, an emergency outcome, or a symptom that needs same-day attention.
-- follow_up: anything the clinician should act on soon, such as missed doses, side effects, pain of seven or more or worse than the last call, worrying symptoms, unanswered patient questions, or an unverified or incomplete call.
-- routine: recovering as expected with nothing to act on.
+- urgent: any red flag or emergency outcome, or a symptom that needs same-day attention.
+- follow_up: the care team should act soon, such as a worrying symptom, no appointment booked when one was needed, an unverified identity, or an unanswered patient question.
+- routine: the request was handled and nothing else needs attention.
 
 Fields:
-- summary: two to four sentences a busy clinician can read in ten seconds, including the change since previous calls when known.
+- summary: two to four sentences a busy clinician can read in ten seconds.
+- reasonForVisit: the patient's reason for the appointment in a short phrase, or "Not stated".
 - symptoms: each reported symptom as a short phrase.
-- medicationAdherence: one sentence on whether medication is taken as prescribed.
+- appointment: what was booked, rescheduled or cancelled, with clinician and time, or "No appointment booked".
 - redFlags: emergency symptoms only, empty when none.
 - actions: concrete next steps for the care team, empty when none.`;

@@ -5,24 +5,31 @@ import { TriageBadge } from "./triage-badge";
 
 const previousCallLimit = 3;
 
-export async function PreviousCalls({ patientId, callId }: { patientId: string; callId: string }) {
+async function PreviousCallList({ patientId, callId }: { patientId: string; callId: string }) {
   const calls = await listRecentSummariesForPatient(patientId, previousCallLimit, callId);
+  if (calls.length === 0) return <p className="text-sm text-muted-foreground">This is the patient&apos;s first call.</p>;
+  return (
+    <ul className="space-y-4">
+      {calls.map((call) => (
+        <li key={call.date.toISOString()} className="space-y-1">
+          <div className="flex items-center justify-between gap-2 text-sm font-medium">
+            {formatDate(call.date)}
+            <TriageBadge level={call.triageLevel} />
+          </div>
+          <p className="text-sm text-muted-foreground">{call.summary}</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function PreviousCalls({ patientId, callId }: { patientId: string | null; callId: string }) {
   return (
     <SectionCard title="Previous calls">
-      {calls.length === 0 ? (
-        <p className="text-sm text-muted-foreground">This is the first follow-up call.</p>
+      {patientId ? (
+        <PreviousCallList patientId={patientId} callId={callId} />
       ) : (
-        <ul className="space-y-4">
-          {calls.map((call) => (
-            <li key={call.date.toISOString()} className="space-y-1">
-              <div className="flex items-center justify-between gap-2 text-sm font-medium">
-                {formatDate(call.date)}
-                <TriageBadge level={call.triageLevel} />
-              </div>
-              <p className="text-sm text-muted-foreground">{call.summary}</p>
-            </li>
-          ))}
-        </ul>
+        <p className="text-sm text-muted-foreground">The caller was not identified.</p>
       )}
     </SectionCard>
   );

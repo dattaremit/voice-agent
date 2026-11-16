@@ -2,12 +2,12 @@ import { PhoneCall } from "lucide-react";
 import { startCall } from "@/app/actions/calls";
 import { SubmitButton } from "@/components/shared/submit-button";
 
-export function StartCallForm({ visitId }: { visitId: string }) {
+export function StartCallForm() {
   return (
-    <form action={startCall.bind(null, visitId)}>
+    <form action={startCall}>
       <SubmitButton size="lg">
         <PhoneCall />
-        Start follow-up call
+        Call the clinic
       </SubmitButton>
     </form>
   );

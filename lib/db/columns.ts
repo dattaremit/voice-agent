@@ -8,3 +8,5 @@ export const timestampColumn = () => timestamp({ withTimezone: true });
 
 export const reference = (target: () => AnyPgColumn) =>
   uuid().notNull().references(target, { onDelete: "cascade" });
+
+export const optionalReference = (target: () => AnyPgColumn) => uuid().references(target, { onDelete: "set null" });

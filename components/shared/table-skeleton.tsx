@@ -1,22 +1,21 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { VisitTableFrame } from "./visit-table-frame";
+import { DataTable } from "./data-table";
 
 const rows = [0, 1, 2];
-const cells = [0, 1, 2, 3];
 
-export function VisitTableSkeleton() {
+export function TableSkeleton({ columns }: { columns: string[] }) {
   return (
-    <VisitTableFrame>
+    <DataTable columns={columns}>
       {rows.map((row) => (
         <TableRow key={row}>
-          {cells.map((cell) => (
-            <TableCell key={cell} className="px-6 py-4">
+          {columns.map((column) => (
+            <TableCell key={column} className="px-6 py-4">
               <Skeleton className="h-4 w-28" />
             </TableCell>
           ))}
         </TableRow>
       ))}
-    </VisitTableFrame>
+    </DataTable>
   );
 }

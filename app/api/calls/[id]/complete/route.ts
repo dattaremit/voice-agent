@@ -11,6 +11,6 @@ export const POST = agentCallRoute(async (callId, request) => {
   if (!completion) return errorResponse(422, "Invalid transcript");
   const call = await completeCall(callId, completion);
   if (!call) return errorResponse(409, "Call is not in progress");
-  if (call.status === "completed") after(() => summarizeCall(call.id, call.visitId).catch(console.error));
+  if (call.status === "completed") after(() => summarizeCall(call.id).catch(console.error));
   return new Response(null, { status: 204 });
 });

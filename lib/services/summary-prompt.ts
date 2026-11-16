@@ -1,28 +1,27 @@
-import { formatDate } from "@/lib/format";
+import type { listAppointmentsForCall } from "@/lib/repositories/appointments";
 import type { listCallAnswers } from "@/lib/repositories/call-answers";
 import type { listRecentSummariesForPatient } from "@/lib/repositories/call-summaries";
 import type { listCallTurns } from "@/lib/repositories/call-turns";
-import type { VisitDetail } from "@/lib/repositories/visits";
+import { clinicLabel } from "@/lib/scheduling/zoned-time";
 
 type SummaryInput = {
-  visit: VisitDetail;
+  patientName: string | undefined;
   answers: Awaited<ReturnType<typeof listCallAnswers>>;
+  appointments: Awaited<ReturnType<typeof listAppointmentsForCall>>;
   turns: Awaited<ReturnType<typeof listCallTurns>>;
   previousCalls: Awaited<ReturnType<typeof listRecentSummariesForPatient>>;
 };
 
 const section = (title: string, lines: string[]) => `${title}:\n${lines.length ? lines.join("\n") : "None."}`;
 
-export const buildSummaryPrompt = ({ visit, answers, turns, previousCalls }: SummaryInput) =>
+export const buildSummaryPrompt = ({ patientName, answers, appointments, turns, previousCalls }: SummaryInput) =>
   [
-    section("Visit", [
-      `${visit.patientName}, seen ${formatDate(visit.visitDate)} by ${visit.clinicianName} for ${visit.reason}.`,
-      `Notes: ${visit.notes ?? "none"}`,
-    ]),
+    section("Patient", [patientName ?? "Not identified"]),
+    section("Previous calls", previousCalls.map((call) => `- ${call.reasonForVisit}: ${call.appointment}`)),
+    section("Intake answers", answers.map((answer) => `- ${answer.questionKey}: ${String(answer.value)}`)),
     section(
-      "Previous follow-up calls",
-      previousCalls.map((call) => `- ${formatDate(call.date)} (${call.triageLevel}): ${call.summary}`),
+      "Appointments changed on this call",
+      appointments.map((item) => `- ${item.status}: ${item.clinicianName}, ${clinicLabel(item.startsAt)}, ${item.reason}`),
     ),
-    section("Recorded answers", answers.map((answer) => `- ${answer.questionKey}: ${String(answer.value)}`)),
     section("Transcript", turns.map((turn) => `${turn.role === "agent" ? "Agent" : "Patient"}: ${turn.text}`)),
   ].join("\n\n");

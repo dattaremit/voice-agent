@@ -10,6 +10,12 @@ export function CallSummaryCard({ summary }: { summary: CallSummary }) {
       <div className="space-y-6">
         <p className="leading-relaxed">{summary.summary}</p>
         <div className="grid gap-6 sm:grid-cols-2">
+          <LabeledBlock label="Reason for visit">
+            <p className="text-sm">{summary.reasonForVisit}</p>
+          </LabeledBlock>
+          <LabeledBlock label="Appointment">
+            <p className="text-sm">{summary.appointment}</p>
+          </LabeledBlock>
           <LabeledBlock label="Red flags">
             <BulletList items={summary.redFlags} empty="None reported." />
           </LabeledBlock>
@@ -18,9 +24,6 @@ export function CallSummaryCard({ summary }: { summary: CallSummary }) {
           </LabeledBlock>
           <LabeledBlock label="Symptoms">
             <BulletList items={summary.symptoms} empty="None reported." />
-          </LabeledBlock>
-          <LabeledBlock label="Medication adherence">
-            <p className="text-sm">{summary.medicationAdherence}</p>
           </LabeledBlock>
         </div>
       </div>

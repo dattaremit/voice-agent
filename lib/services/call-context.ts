@@ -1,20 +1,13 @@
-import { listRecentSummariesForPatient } from "@/lib/repositories/call-summaries";
-import { getVisit } from "@/lib/repositories/visits";
+import { listClinicians } from "@/lib/repositories/clinicians";
+import { CLINIC_TIME_ZONE, CLOSING_HOUR, OPENING_HOUR, SLOT_MINUTES } from "@/lib/scheduling/clinic-hours";
 
-const previousCallLimit = 3;
+const todayFormatter = new Intl.DateTimeFormat("en-US", { timeZone: CLINIC_TIME_ZONE, dateStyle: "full" });
 
-export async function buildCallContext(callId: string, visitId: string) {
-  const visit = await getVisit(visitId);
-  if (!visit) return undefined;
+export async function buildCallContext(callId: string, now = new Date()) {
   return {
     callId,
-    patient: { name: visit.patientName, dateOfBirth: visit.patientDateOfBirth },
-    visit: {
-      date: visit.visitDate,
-      reason: visit.reason,
-      clinicianName: visit.clinicianName,
-      notes: visit.notes,
-    },
-    previousCalls: await listRecentSummariesForPatient(visit.patientId, previousCallLimit),
+    today: todayFormatter.format(now),
+    clinicHours: `Monday to Friday, ${OPENING_HOUR}:00 to ${CLOSING_HOUR}:00 ${CLINIC_TIME_ZONE}, ${SLOT_MINUTES} minute appointments`,
+    clinicians: await listClinicians(),
   };
 }

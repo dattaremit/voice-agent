@@ -6,7 +6,7 @@ import { listCallAnswers } from "@/lib/repositories/call-answers";
 export async function RecordedAnswers({ callId }: { callId: string }) {
   const answers = await listCallAnswers(callId);
   return (
-    <SectionCard title="Recorded answers">
+    <SectionCard title="Intake answers">
       {answers.length === 0 ? (
         <p className="text-sm text-muted-foreground">No answers were recorded.</p>
       ) : (

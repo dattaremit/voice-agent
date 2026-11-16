@@ -1,1 +1,0 @@
-ALTER TABLE "call_turns" ADD COLUMN "position" integer NOT NULL;

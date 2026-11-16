@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1794752535587,
-      "tag": "0000_purple_changeling",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1794762459602,
-      "tag": "0001_slippery_nightcrawler",
+      "when": 1794848863791,
+      "tag": "0000_naive_red_shift",
       "breakpoints": true
     }
   ]

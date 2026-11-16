@@ -1,22 +1,20 @@
 import { and, desc, eq, ne } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { callSummaries, calls, visits } from "@/lib/db/schema";
+import { callSummaries, calls } from "@/lib/db/schema";
 import type { CallSummary } from "@/lib/schemas/call-summary";
 
 export const listRecentSummariesForPatient = (patientId: string, limit: number, excludeCallId?: string) =>
   db
     .select({
       date: callSummaries.createdAt,
-      visitReason: visits.reason,
       triageLevel: callSummaries.triageLevel,
       summary: callSummaries.summary,
-      medicationAdherence: callSummaries.medicationAdherence,
-      redFlags: callSummaries.redFlags,
+      reasonForVisit: callSummaries.reasonForVisit,
+      appointment: callSummaries.appointment,
     })
     .from(callSummaries)
     .innerJoin(calls, eq(callSummaries.callId, calls.id))
-    .innerJoin(visits, and(eq(calls.visitId, visits.id), eq(visits.patientId, patientId)))
-    .where(excludeCallId ? ne(calls.id, excludeCallId) : undefined)
+    .where(and(eq(calls.patientId, patientId), excludeCallId ? ne(calls.id, excludeCallId) : undefined))
     .orderBy(desc(callSummaries.createdAt))
     .limit(limit);
 

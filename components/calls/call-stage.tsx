@@ -6,7 +6,7 @@ import type { CallStatus } from "@/lib/repositories/calls";
 
 type CallStageProps = {
   callId: string;
-  patientId: string;
+  patientId: string | null;
   status: CallStatus;
 };
 
