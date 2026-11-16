@@ -2,6 +2,7 @@
 
 import { PipecatClientAudio, PipecatClientProvider } from "@pipecat-ai/client-react";
 import { CallControls } from "@/modules/calls/live-call/call-controls";
+import { MicAccessGate } from "@/modules/calls/live-call/mic-access-gate";
 import { MicWarning } from "@/modules/calls/live-call/mic-warning";
 import { RefreshOnDisconnect } from "@/modules/calls/live-call/refresh-on-disconnect";
 import { Transcript } from "@/modules/calls/live-call/transcript";
@@ -12,7 +13,9 @@ export default function LiveCall({ callId }: { callId: string }) {
   return (
     <PipecatClientProvider client={client}>
       <div className="space-y-6">
-        <CallControls callId={callId} />
+        <MicAccessGate>
+          <CallControls callId={callId} />
+        </MicAccessGate>
         <MicWarning />
         <Transcript />
       </div>
