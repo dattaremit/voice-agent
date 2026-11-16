@@ -1,7 +1,7 @@
-import { identifiedCallRoute } from "@/lib/api/active-call-route";
+import { identifiedCallRoute } from "@/modules/calls/identified-call-route";
 import { errorResponse } from "@/lib/api/responses";
-import { cancelAppointment } from "@/lib/repositories/appointments";
-import { cancellationRequestSchema } from "@/lib/schemas/scheduling-requests";
+import { cancelAppointment } from "@/modules/scheduling/appointment-repository";
+import { cancellationRequestSchema } from "@/modules/scheduling/cancellation-request";
 
 export const POST = identifiedCallRoute(cancellationRequestSchema, async (call, { appointmentId }) => {
   const cancelled = await cancelAppointment(appointmentId, call.patientId);

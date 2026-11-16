@@ -1,4 +1,4 @@
-import { bookableSlots } from "@/lib/scheduling/slot-grid";
+import { bookableSlots } from "@/modules/scheduling/slot-grid";
 import { db } from "./client";
 import { appointments, calls, clinicians, patients } from "./schema";
 import { seedBookings, seedClinicians, seedPatients } from "./seed-data";

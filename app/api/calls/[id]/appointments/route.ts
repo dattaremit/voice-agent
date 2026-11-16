@@ -1,6 +1,6 @@
-import { identifiedCallRoute } from "@/lib/api/active-call-route";
-import { bookingRequestSchema } from "@/lib/schemas/scheduling-requests";
-import { bookAppointment } from "@/lib/services/book-appointment";
+import { identifiedCallRoute } from "@/modules/calls/identified-call-route";
+import { bookingRequestSchema } from "@/modules/scheduling/booking-request";
+import { bookAppointment } from "@/modules/scheduling/book-appointment";
 
 export const POST = identifiedCallRoute(bookingRequestSchema, async (call, request) => {
   const result = await bookAppointment(call.id, call.patientId, request);

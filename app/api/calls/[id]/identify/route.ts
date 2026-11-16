@@ -1,7 +1,7 @@
-import { activeCallRoute } from "@/lib/api/active-call-route";
+import { activeCallRoute } from "@/modules/calls/active-call-route";
 import { errorResponse } from "@/lib/api/responses";
-import { identifyRequestSchema } from "@/lib/schemas/scheduling-requests";
-import { identifyPatient } from "@/lib/services/identify-patient";
+import { identifyRequestSchema } from "@/modules/patients/identify-request";
+import { identifyPatient } from "@/modules/patients/identify-patient";
 
 export const POST = activeCallRoute(identifyRequestSchema, async (call, { name, dateOfBirth }) => {
   const patient = await identifyPatient(call.id, name, dateOfBirth);

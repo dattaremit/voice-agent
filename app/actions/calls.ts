@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createCall } from "@/lib/repositories/calls";
+import { createCall } from "@/modules/calls/call-repository";
 
 export async function startCall() {
   const call = await createCall();

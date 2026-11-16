@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { CallOverview } from "@/components/calls/call-overview";
+import { CallOverview } from "@/modules/calls/components/call-overview";
 import { PageContainer } from "@/components/layout/page-container";
 import { PageSkeleton } from "@/components/shared/page-skeleton";
 

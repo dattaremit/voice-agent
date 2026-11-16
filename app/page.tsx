@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { AppointmentTable } from "@/components/appointments/appointment-table";
-import { APPOINTMENT_COLUMNS } from "@/components/appointments/appointment-columns";
-import { RecentCalls } from "@/components/calls/recent-calls";
-import { StartCallForm } from "@/components/calls/start-call-form";
+import { AppointmentTable } from "@/modules/scheduling/components/appointment-table";
+import { APPOINTMENT_COLUMNS } from "@/modules/scheduling/components/appointment-columns";
+import { RecentCalls } from "@/modules/calls/components/recent-calls";
+import { StartCallForm } from "@/modules/calls/components/start-call-form";
 import { PageContainer } from "@/components/layout/page-container";
 import { PageHeading } from "@/components/layout/page-heading";
 import { PageSkeleton } from "@/components/shared/page-skeleton";

@@ -2,9 +2,9 @@ import { after } from "next/server";
 import { agentCallRoute } from "@/lib/api/agent-call-route";
 import { parseBody } from "@/lib/api/parse-body";
 import { errorResponse } from "@/lib/api/responses";
-import { callCompletionSchema } from "@/lib/schemas/call-completion";
-import { completeCall } from "@/lib/services/complete-call";
-import { summarizeCall } from "@/lib/services/summarize-call";
+import { callCompletionSchema } from "@/modules/calls/call-completion";
+import { completeCall } from "@/modules/calls/complete-call";
+import { summarizeCall } from "@/modules/summaries/summarize-call";
 
 export const POST = agentCallRoute(async (callId, request) => {
   const completion = await parseBody(request, callCompletionSchema);

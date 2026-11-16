@@ -1,7 +1,7 @@
 import { agentCallRoute } from "@/lib/api/agent-call-route";
 import { errorResponse } from "@/lib/api/responses";
-import { markCallStarted } from "@/lib/repositories/calls";
-import { buildCallContext } from "@/lib/services/call-context";
+import { markCallStarted } from "@/modules/calls/call-repository";
+import { buildCallContext } from "@/modules/calls/call-context";
 
 export const POST = agentCallRoute(async (callId) => {
   const call = await markCallStarted(callId);
