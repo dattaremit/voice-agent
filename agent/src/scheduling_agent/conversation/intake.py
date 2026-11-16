@@ -16,5 +16,3 @@ INTAKE_FIELDS = (
 )
 
 INTAKE_KEYS = tuple(field.key for field in INTAKE_FIELDS)
-
-CALL_OUTCOMES = ("booked", "rescheduled", "cancelled", "no_booking", "identity_not_verified", "emergency")

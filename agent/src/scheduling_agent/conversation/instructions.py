@@ -1,4 +1,4 @@
-from scheduling_agent.questions import INTAKE_FIELDS
+from scheduling_agent.conversation.intake import INTAKE_FIELDS
 
 _ROLE = """\
 You are Ava, the scheduling assistant for Maple Grove Clinic, answering a patient's phone call.

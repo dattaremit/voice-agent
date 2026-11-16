@@ -32,16 +32,40 @@ Browser mic ──WebRTC──▶ Pipecat agent (Python)
 
 | Component | Where | What to change |
 |---|---|---|
-| Clinic hours, slot length, booking window | `lib/scheduling/clinic-hours.ts` | Constants |
-| Slot generation, time zones | `lib/scheduling/slot-grid.ts`, `zoned-time.ts` | Pure functions, no clock or DB access |
-| Availability | `lib/services/availability.ts` | Slot grid minus booked appointments |
+| Clinic hours, slot length, booking window | `modules/scheduling/clinic-hours.ts` | Constants |
+| Slot generation, time zones | `modules/scheduling/slot-grid.ts`, `zoned-time.ts` | Pure functions, no clock or DB access |
+| Availability | `modules/scheduling/availability.ts` | Slot grid minus booked appointments |
+| Booking | `modules/scheduling/book-appointment.ts` | Validates clinician and slot, inserts once |
 | Double-booking guard | `appointments_clinician_slot_booked` partial unique index | Enforced by Postgres, not by the model |
-| Agent API | `app/api/calls/[id]/*` | Bearer auth, call must be in progress, booking requires an identified patient |
-| Agent behaviour | `agent/src/scheduling_agent/instructions.py` | Call flow, tool rules, safety rules |
-| Intake questions | `agent/src/scheduling_agent/questions.py` | One list drives the prompt and the tool's allowed keys |
-| Tools | `agent/src/scheduling_agent/call_tools.py` | JSON schemas plus thin handlers that call the API |
+| Patient identity | `modules/patients/identify-patient.ts` | Name and date of birth match, then the call is bound to that patient |
+| Agent API guards | `lib/api/agent-call-route.ts`, `modules/calls/active-call-route.ts`, `identified-call-route.ts` | Bearer auth, call in progress, identified patient |
+| Summaries | `modules/summaries/` | Load input, generate with the model, persist |
+| Agent behaviour | `agent/src/scheduling_agent/conversation/instructions.py` | Call flow, tool rules, safety rules |
+| Intake questions | `agent/src/scheduling_agent/conversation/intake.py` | One list drives the prompt and the tool's allowed keys |
+| Tools | `agent/src/scheduling_agent/tools/schemas.py`, `handlers.py` | JSON schemas, and thin handlers that call the API |
+| Speech and model services | `agent/src/scheduling_agent/services/` | One factory each for STT, LLM and TTS |
+| Turn-taking | `agent/src/scheduling_agent/pipeline/turn_taking.py` | VAD, Flux end of turn, LLM completion marker |
 | Models | `.env` (`OPENAI_CALL_MODEL`, `OPENAI_SUMMARY_MODEL`) | Swap without code changes |
-| Speech pronunciations | `agent/src/scheduling_agent/ai_services.py` | Text transforms before TTS, e.g. 911 → "nine one one" |
+| Speech pronunciations | `agent/src/scheduling_agent/services/spoken_forms.py` | Text transforms before TTS, e.g. 911 → "nine one one" |
+
+## Module layout
+
+```
+app/                     routes only: pages, server action, agent API handlers
+lib/                     shared infrastructure: db, env, API auth, routing, formatting, OpenAI client
+modules/
+  patients/              identity lookup
+  scheduling/            clinic hours, slots, availability, clinicians, appointments, booking
+  calls/                 call lifecycle, transcript, intake answers, live call UI
+  summaries/             post-call summary pipeline and review UI
+components/              ui primitives, shared and layout components
+agent/src/scheduling_agent/
+  clinic_api/            HTTP client and typed calls to the web app
+  conversation/          instructions, intake, outcomes, prompt, transcript
+  tools/                 tool schemas and handlers
+  services/              speech to text, language model, text to speech
+  pipeline/              session wiring, turn-taking, cache metrics
+```
 
 The model only decides what to say and which tool to call. Every rule that must always hold (identity before booking, valid slot, no double booking, own appointments only) is enforced in code and in the database.
 
@@ -115,7 +139,8 @@ The model only decides what to say and which tool to call. Every rule that must 
 
 - No comments in code.
 - One responsibility per file; no duplicated logic or UI.
-- Database access only through `lib/repositories`; environment access only through `lib/env.ts` and `agent/src/scheduling_agent/config.py`.
+- Each feature module owns its repository, service, schema and components; `lib/` holds only shared infrastructure.
+- Database access only through repository files; environment access only through `lib/env.ts` and `agent/src/scheduling_agent/config.py`.
 
 ## Getting started
 

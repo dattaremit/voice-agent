@@ -5,20 +5,14 @@ from pipecat.runner.types import RunnerArguments
 from pipecat.runner.utils import create_transport
 from pipecat.transports.base_transport import TransportParams
 
+from scheduling_agent.call_report import report_call
+from scheduling_agent.clinic_api.calls import start_call
 from scheduling_agent.config import get_settings
-from scheduling_agent.pipeline import CALL_OPENING, CallSession, build_call_session
-from scheduling_agent.transcript import transcript_turns
-from scheduling_agent.web_app import complete_call, start_call
+from scheduling_agent.pipeline.session import build_call_session
 
 TRANSPORT_PARAMS = {
     "webrtc": lambda: TransportParams(audio_in_enabled=True, audio_out_enabled=True),
 }
-
-
-async def _finish(call_id: str, session: CallSession) -> None:
-    turns = transcript_turns(session.conversation, CALL_OPENING)
-    await complete_call(call_id, turns)
-    logger.info(f"Call {call_id} completed with {len(turns)} turns")
 
 
 async def bot(runner_args: RunnerArguments) -> None:
@@ -39,4 +33,4 @@ async def bot(runner_args: RunnerArguments) -> None:
         await session.task.cancel()
 
     await PipelineRunner(handle_sigint=runner_args.handle_sigint).run(session.task)
-    await _finish(call_id, session)
+    await report_call(call_id, session.conversation)

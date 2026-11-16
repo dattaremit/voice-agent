@@ -1,5 +1,5 @@
-from scheduling_agent.call_context import CallContext
-from scheduling_agent.instructions import CALL_INSTRUCTIONS
+from scheduling_agent.clinic_api.models import CallContext
+from scheduling_agent.conversation.instructions import CALL_INSTRUCTIONS
 
 
 def _clinic_section(context: CallContext) -> str:
